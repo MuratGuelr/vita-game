@@ -7,6 +7,8 @@ import {
   doc,
   updateDoc,
   onSnapshot,
+  getDoc,
+  arrayUnion,
 } from "firebase/firestore";
 import AvatarProfile from "../components/AvatarProfile";
 import { toast } from "react-toastify";
@@ -53,38 +55,31 @@ const AddFriends = () => {
 
   const handleAddFriend = async (userId) => {
     if (currentUser) {
-      const friendRequestsRef = doc(db, "Users", userId);
-      await updateDoc(friendRequestsRef, {
-        friendRequests: {
-          ...friendRequestsRef.friendRequests,
-          [currentUser.id]: {
-            uid: currentUser.id,
-            from: currentUser.username,
-            timestamp: new Date(),
-          },
-        },
-      });
-
       const recipientDocRef = doc(db, "Users", userId);
+      const recipientDocSnap = await getDoc(recipientDocRef);
+      const recipientData = recipientDocSnap.data();
+
+      const friendRequest = {
+        uid: currentUser.id,
+        from: currentUser.username,
+        timestamp: new Date(),
+      };
+
+      const updatedFriendRequests = {
+        ...recipientData.friendRequests,
+        [currentUser.id]: friendRequest,
+      };
+
       await updateDoc(recipientDocRef, {
-        friends: {
-          ...recipientDocRef.friends,
-          [currentUser.id]: {
-            uid: currentUser.id,
-            username: currentUser.username,
-          },
-        },
+        friendRequests: updatedFriendRequests,
       });
 
-      const senderDocRef = doc(db, "Users", currentUser.id);
-      await updateDoc(senderDocRef, {
-        friends: {
-          ...senderDocRef.friends,
-          [userId]: {
-            uid: userId,
-            username: users.find((user) => user.id === userId).username,
-          },
-        },
+      // Notify the recipient about the friend request
+      await updateDoc(recipientDocRef, {
+        notifications: arrayUnion({
+          message: `${currentUser.username} sent you a friend request!`,
+          timestamp: new Date(),
+        }),
       });
 
       toast.success("Friend request has been sent!");
