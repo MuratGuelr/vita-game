@@ -14,6 +14,7 @@ import Profile from "./pages/Profile";
 import Friends from "./pages/Friends";
 import AddFriends from "./pages/AddFriends";
 import Notifications from "./pages/Notifications";
+import VitaGame from "./pages/VitaGame";
 
 function App() {
   const router = createBrowserRouter(
@@ -25,6 +26,7 @@ function App() {
         <Route path="/profile" element={<Profile />} />
         <Route path="/friends" element={<Friends />} />
         <Route path="/add-friend" element={<AddFriends />} />
+        <Route path="/vita-game" element={<VitaGame />} />
         <Route path="/notifications" element={<Notifications />} />
         <Route path="*" element={<NotFound />} />
       </Route>

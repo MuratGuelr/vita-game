@@ -1,3 +1,4 @@
+// NewFriendRequest.js
 import React, { useEffect, useState } from "react";
 import { HiUserAdd } from "react-icons/hi";
 import { auth, db } from "../firebase/firebase";
@@ -8,9 +9,6 @@ import {
   arrayUnion,
   onSnapshot,
 } from "firebase/firestore";
-import { toast } from "react-toastify";
-
-let friendRequestNames = [];
 
 const timeAgo = (timestamp) => {
   const seconds = Math.floor((new Date() - timestamp.toDate()) / 1000);
@@ -69,8 +67,6 @@ const NewFriendRequest = () => {
     if (data && data.friendRequests) {
       const friendRequests = data.friendRequests;
       const friendRequestEntries = Object.entries(friendRequests);
-
-      friendRequestNames = friendRequestEntries.map(([_, req]) => req.from);
 
       setFriendRequestDetails(
         friendRequestEntries.map(([key, req]) => {
@@ -161,8 +157,13 @@ const NewFriendRequest = () => {
           friends: arrayUnion(userFriendData),
         });
         console.log("User added to sender's friends list");
+
+        // Remove the friend request after adding friend
+        await dismissFriendRequest(uid);
       }
-    } catch (error) {}
+    } catch (error) {
+      console.error("Error adding friend: ", error);
+    }
   };
 
   const dismissFriendRequest = async (uid) => {
@@ -180,37 +181,51 @@ const NewFriendRequest = () => {
 
         const senderDocSnap = await getDoc(doc(db, "Users", uid));
         const senderData = senderDocSnap.data();
+        const senderDocRef = doc(db, "Users", uid);
 
-        if (senderData.friendSentRequests) {
-          const updatedSentRequests = { ...senderData.friendSentRequests };
-          delete updatedSentRequests[auth.currentUser.uid];
-          await updateDoc(doc(db, "Users", uid), {
-            friendSentRequests: updatedSentRequests,
-          });
-          console.log(
-            "Friend request removed from sender's friendSentRequests list"
-          );
-        }
+        const updatedSenderFriendRequests = {
+          ...senderData.friendRequests,
+        };
+        delete updatedSenderFriendRequests[auth.currentUser.uid];
+        await updateDoc(senderDocRef, {
+          friendRequests: updatedSenderFriendRequests,
+        });
+        console.log("Friend request removed from sender's friendRequests list");
+
+        // Remove the notification as well
+        const updatedNotifications = userDetails.notifications.filter(
+          (notification) => notification.uid !== uid
+        );
+        await updateDoc(userDocRef, {
+          notifications: updatedNotifications,
+        });
+        console.log("Notification removed");
+
+        // Also remove notification from the sender
+        const updatedSenderNotifications = senderData.notifications.filter(
+          (notification) => notification.uid !== auth.currentUser.uid
+        );
+        await updateDoc(senderDocRef, {
+          notifications: updatedSenderNotifications,
+        });
+        console.log("Notification removed from sender's notifications list");
       }
     } catch (error) {
-      // ... error handling
+      console.error("Error dismissing friend request: ", error);
     }
   };
 
   return (
-    <div>
-      {friendRequestNames.length > 0 ? (
-        <>{friendRequestDetails}</>
+    <>
+      {friendRequestDetails.length > 0 ? (
+        friendRequestDetails
       ) : (
-        <>
-          <div>
-            <h2>There are no notifications at the moment.</h2>
-          </div>
-        </>
+        <p className="p-2 m-3 bg-red-600 rounded-lg">
+          No new Friend Request available
+        </p>
       )}
-    </div>
+    </>
   );
 };
 
-export { friendRequestNames };
 export default NewFriendRequest;

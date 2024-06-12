@@ -5,10 +5,8 @@ import { useNavigate } from "react-router";
 import { doc, onSnapshot, updateDoc, setDoc } from "firebase/firestore";
 import { toast } from "react-toastify";
 import Loading from "../components/Loading";
-import { MdOutlineDarkMode, MdDarkMode } from "react-icons/md";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { FaFileUpload } from "react-icons/fa";
-import ListImages from "../components/ListImages";
 
 const Profile = () => {
   const navigate = useNavigate();

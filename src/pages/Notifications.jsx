@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import { auth, db } from "../firebase/firebase";
 import { doc, onSnapshot } from "firebase/firestore";
 import { toast } from "react-toastify";
-import NewFriendRequest from "../components/NewFriendRequest";
 
 const Notifications = () => {
   const [notifications, setNotifications] = useState([]);
@@ -38,7 +37,6 @@ const Notifications = () => {
   return (
     <div className="p-5 bg-white dark:bg-gray-900 antialiased justify-center">
       <div>
-        <NewFriendRequest />
         <div className="mt-5">
           <h2 className="text-2xl font-bold dark:text-white">Notifications</h2>
           {notifications.length > 0 ? (
